@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>My Pastebin</title>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: #1e1e1e;
+      color: #ddd;
+      margin: 0;
+      padding: 20px;
+    }
+    .container {
+      max-width: 900px;
+      margin: auto;
+      background: #252526;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+    }
+    h1 {
+      text-align: center;
+      color: #4da6ff;
+      margin-bottom: 20px;
+    }
+    textarea {
+      width: 100%;
+      height: 320px;
+      background: #1e1e1e;
+      color: #ddd;
+      border: 1px solid #444;
+      padding: 14px;
+      font-family: 'Courier New', monospace;
+      font-size: 15px;
+      border-radius: 6px;
+      resize: vertical;
+      outline: none;
+    }
+    textarea::placeholder { color: #777; }
+    .actions {
+      margin-top: 12px;
+      text-align: center;
+    }
+    button {
+      padding: 11px 20px;
+      background: #0078d4;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      font-size: 15px;
+      transition: 0.2s;
+    }
+    button:hover { background: #106ebe; }
+    .result {
+      margin-top: 20px;
+      padding: 14px;
+      background: #2d2d2d;
+      border-radius: 6px;
+      display: none;
+      word-break: break-all;
+      font-size: 14px;
+    }
+    .link-row {
+      margin: 10px 0;
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+    .link-row strong {
+      color: #4da6ff;
+      min-width: 80px;
+    }
+    .link {
+      color: #4ec9ff;
+      text-decoration: none;
+      flex: 1;
+    }
+    .link:hover { text-decoration: underline; }
+    .copy-btn {
+      background: #444;
+      padding: 5px 10px;
+      font-size: 12px;
+      margin-left: 5px;
+    }
+    .copy-btn:hover { background: #555; }
+    .footer {
+      text-align: center;
+      margin-top: 30px;
+      color: #666;
+      font-size: 13px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>My Pastebin</h1>
+    <textarea id="content" placeholder="여기에 코드를 붙여넣으세요..."></textarea>
+    <div class="actions">
+      <button onclick="createPaste()">페이스트 생성</button>
+    </div>
+
+    <div id="result" class="result">
+      <div class="link-row">
+        <strong>공유 링크:</strong>
+        <a id="pasteLink" href="#" target="_blank" class="link"></a>
+        <button class="copy-btn" onclick="copyLink('pasteLink')">복사</button>
+      </div>
+      <div class="link-row">
+        <strong>Raw 링크:</strong>
+        <a id="rawLink" href="#" target="_blank" class="link">raw.html?id=...</a>
+        <button class="copy-btn" onclick="copyLink('rawLink')">복사</button>
+      </div>
+    </div>
+
+    <div class="footer">
+      서버 없이 동작 • localStorage 기반 • Raw 보기 지원
+    </div>
+  </div>
+
+  <script>
+    function generateId() {
+      return Math.random().toString(36).substr(2, 9);
+    }
+
+    function createPaste() {
+      const content = document.getElementById('content').value.trim();
+      if (!content) {
+        alert('텍스트를 입력하세요!');
+        return;
+      }
+
+      const id = generateId();
+      localStorage.setItem(id, content);
+
+      const baseUrl = location.href.split('?')[0].replace(/\/$/, '');
+      const pasteUrl = `${baseUrl}?id=${id}`;
+      const rawUrl = `${baseUrl}/raw.html?id=${id}`.replace(/([^:]\/)\/+/g, "$1");
+
+      const pasteLink = document.getElementById('pasteLink');
+      const rawLink = document.getElementById('rawLink');
+
+      pasteLink.href = pasteUrl;
+      pasteLink.textContent = pasteUrl;
+      rawLink.href = rawUrl;
+      rawLink.textContent = rawUrl;
+
+      document.getElementById('result').style.display = 'block';
+      document.getElementById('content').select();
+    }
+
+    function copyLink(id) {
+      const link = document.getElementById(id);
+      navigator.clipboard.writeText(link.href).then(() => {
+        const btn = link.nextElementSibling;
+        const orig = btn.textContent;
+        btn.textContent = '복사됨!';
+        btn.style.background = '#0a0';
+        setTimeout(() => {
+          btn.textContent = orig;
+          btn.style.background = '#444';
+        }, 1000);
+      });
+    }
+
+    // 페이지 로드 시 id 있으면 자동 로드
+    window.onload = () => {
+      const params = new URLSearchParams(location.search);
+      const id = params.get('id');
+      if (id && localStorage.getItem(id)) {
+        document.getElementById('content').value = localStorage.getItem(id);
+        document.getElementById('result').style.display = 'block';
+        const base = location.href.split('?')[0].replace(/\/$/, '');
+        document.getElementById('pasteLink').href = location.href;
+        document.getElementById('pasteLink').textContent = location.href;
+        document.getElementById('rawLink').href = `${base}/raw.html?id=${id}`.replace(/([^:]\/)\/+/g, "$1");
+        document.getElementById('rawLink').textContent = document.getElementById('rawLink').href;
+      }
+    };
+  </script>
+</body>
+</html>
