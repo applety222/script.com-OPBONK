@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Raw Paste</title>
+  <style>
+    * { margin:0; padding:0; }
+    body {
+      background: #1e1e1e;
+      font-family: 'Courier New', monospace;
+      overflow: hidden;
+      color: #d4d4d4;
+    }
+    #content {
+      margin: 0;
+      padding: 20px;
+      font-size: 15px;
+      line-height: 1.6;
+      white-space: pre-wrap;
+      word-wrap: break-word;
+      min-height: 100vh;
+    }
+    .error {
+      color: #ff6b6b;
+      font-weight: bold;
+    }
+    a {
+      color: #4da6ff;
+      text-decoration: underline;
+      cursor: pointer;
+    }
+    a:hover {
+      color: #80bfff;
+    }
+  </style>
+</head>
+<body>
+  <div id="content">Loading...</div>
+
+  <script>
+    // URL 파라미터에서 ID 추출
+    const params = new URLSearchParams(location.search);
+    const id = params.get('id');
+    const contentDiv = document.getElementById('content');
+
+    // 링크 자동 변환 함수
+    function linkify(text) {
+      const urlRegex = /(https?:\/\/[^\s<]+[^\s<.,;:!?])/g;
+      return text.replace(urlRegex, function(url) {
+        // 보안: 프로토콜이 없으면 http:// 추가 방지 (XSS 방지)
+        if (!url.match(/^https?:\/\//i)) return url;
+        return `<a href="${url}" target="_blank" rel="noopener noreferrer">${url}</a>`;
+      });
+    }
+
+    // localStorage에서 데이터 로드
+    if (id) {
+      const rawContent = localStorage.getItem(id);
+      if (rawContent) {
+        const linkedContent = linkify(rawContent);
+        contentDiv.innerHTML = linkedContent;
+      } else {
+        contentDiv.textContent = 'Error: Paste not found or expired.';
+        contentDiv.classList.add('error');
+      }
+    } else {
+      contentDiv.textContent = 'Error: No paste ID provided.';
+      contentDiv.classList.add('error');
+    }
+  </script>
+</body>
+</html>
